@@ -1,6 +1,7 @@
 import API from 'taskcluster-lib-api'
 import User from './user'
 import _ from 'lodash'
+import taskcluster from 'taskcluster-client'
 
 var api = new API({
   title:         "Login API",
@@ -68,6 +69,49 @@ api.declare({
 
   // create and return temporary credentials
   let credentials = user.createCredentials(this.temporaryCredentials);
+  return res.status(200).json(credentials);
+});
+
+api.declare({
+  method:     'post',
+  route:      '/restrictedCredentials',
+  name:       'restrictedCredentials',
+  idempotent: false,
+  scopes:     [
+    ['auth:create-client:<newClientId>', 'login:extend-temp-credentials'],
+  ],
+  input:      'restricted-credentials-request.json',
+  output:     'credentials-response.json',
+  title:      'Get TaskCluster credentials with a subset of the caller\'s scopes',
+  stability:  API.stability.experimental,
+  description: [
+    "This method returns a new set of temporary credentials with scopes that",
+    "are satisfied, but may be smaller, than the caller.  This is useful for",
+    "handing limited credentials to a less-trusted service, for example in",
+    "a federated login system.",
+    "",
+    "The clientId of the new temporary credentials will be constructed from",
+    "the caller's clientId, concatenated with the provided suffix.",
+    "The caller must have scope `auth:create-client:<newClientId>`."
+  ].join('\n')
+}, async function(req, res) {
+  let scopes = req.body.scopes;
+  let newClientId = (await req.clientId()) + '/' + req.body.clientIdSuffix;
+
+  // make sure the desired scopes are completely satisfied, and that the caller
+  // can create the given clientId
+  if (!req.satisfies([scopes]) || !req.satisfies({clientId: newClientId})) {
+    return;
+  }
+
+  let credentials = taskcluster.createTemporaryCredentials({
+    clientId: newClientId,
+    start: taskcluster.fromNow(this.temporaryCredentials.startOffset),
+    // XXX: expiry must be no later than the caller's credentials' expiration
+    //expiry: taskcluster.fromNow(this.temporaryCredentials.expiry),
+    scopes,
+    credentials: this.temporaryCredentials.credentials
+  });
   return res.status(200).json(credentials);
 });
 

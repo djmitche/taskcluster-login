@@ -41,5 +41,33 @@ suite('API', function() {
       throw new Error("unexpected success");
     });
   });
+
+  suite("restrictedCredentials", function() {
+    test("succeeds with appropriate scopes", async () => {
+      let creds = await helper.login.restrictedCredentials({
+        scopes: ['subscope1', 'subscope2'],
+        clientIdSuffix: 'testy',
+      });
+      let cert = JSON.parse(creds.certificate);
+      assume(cert.scopes).to.contain("subscope1");
+      assume(creds.clientId).to.equal('test-client/testy');
+    });
+
+    test("fails without scopes satisfying requested scopes", async () => {
+      helper.scopes('somescope');
+      try {
+        await helper.login.restrictedCredentials({
+          scopes: ['another-scope'],
+          clientIdSuffix: 'testy',
+        });
+      } catch(err) {
+        assume(err.code).to.equal('InsufficientScopes');
+        return
+      }
+      throw new Error("unexpected success");
+    });
+
+    // TODO: w/o auth:create-client:foo
+  });
 });
 
