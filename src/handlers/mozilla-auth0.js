@@ -75,6 +75,8 @@ class Handler {
   }
 
   async userFromRequest(req, res) {
+    console.log('userFromRequest');
+    debug('userFromRequest');
     // check the JWT's validity, setting req.user if sucessful
     try {
       await new Promise((resolve, reject) =>
@@ -85,6 +87,8 @@ class Handler {
     }
 
     debug(`received valid access_token for subject ${req.user.sub}`);
+
+    debug(`scope ${req.user.scope}`);
 
     // for the moment, we require the `full-user-credentials` scope, because
     // that's the only one.  This allows us to later add other scopes and
