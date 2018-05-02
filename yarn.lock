@@ -2383,9 +2383,9 @@ taskcluster-client@^3.0.3, taskcluster-client@^3.1.0:
     slugid "^1.1.0"
     superagent "~3.8.1"
 
-taskcluster-client@^3.2.1:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/taskcluster-client/-/taskcluster-client-3.2.1.tgz#60d6c2dd111e13501e775b92dd5d8398566f7cb3"
+taskcluster-client@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/taskcluster-client/-/taskcluster-client-4.1.0.tgz#37d76f17a239d0ef8935452eb059a46e4d78eb89"
   dependencies:
     amqplib "^0.5.1"
     babel-runtime "^6.26.0"
@@ -2396,9 +2396,9 @@ taskcluster-client@^3.2.1:
     slugid "^1.1.0"
     superagent "~3.8.1"
 
-taskcluster-lib-api@8.0.0:
-  version "8.0.0"
-  resolved "https://registry.yarnpkg.com/taskcluster-lib-api/-/taskcluster-lib-api-8.0.0.tgz#d459870d48134a3fdd14fc1c92b244807d6b7c2b"
+taskcluster-lib-api@8.3.0:
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/taskcluster-lib-api/-/taskcluster-lib-api-8.3.0.tgz#ced009510f74d1494e81e7a159c9de5814d80742"
   dependencies:
     ajv "^5.3.0"
     aws-sdk "^2.151.0"
@@ -2415,11 +2415,10 @@ taskcluster-lib-api@8.0.0:
     type-is "^1.6.15"
     uuid "^3.1.0"
 
-taskcluster-lib-app@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/taskcluster-lib-app/-/taskcluster-lib-app-3.0.0.tgz#bcdb50061f955f8315feed83d3acb9a72e6010c8"
+taskcluster-lib-app@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/taskcluster-lib-app/-/taskcluster-lib-app-4.0.0.tgz#1db3c7278fa0feab70d4d85c1053eaa68ea23648"
   dependencies:
-    babel-runtime "^6.26.0"
     content-security-policy "^0.3.0"
     debug "^3.1.0"
     express "4.16.2"
@@ -2525,9 +2524,9 @@ taskcluster-lib-validate@^3.0.1:
     url-join "^2.0.2"
     walk "^2.3.9"
 
-taskcluster-lib-validate@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/taskcluster-lib-validate/-/taskcluster-lib-validate-3.0.3.tgz#3b09ccda1a205e728009bafb60f2eb0a11e10a85"
+taskcluster-lib-validate@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/taskcluster-lib-validate/-/taskcluster-lib-validate-3.1.0.tgz#da73c5b908dcdc682b5c8b7d5c88112b57d4a316"
   dependencies:
     ajv "^5.3.0"
     app-root-dir "^1.0.2"
