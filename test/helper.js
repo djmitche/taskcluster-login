@@ -1,36 +1,36 @@
 const taskcluster = require('taskcluster-client');
-const testing = require('taskcluster-lib-testing');
-const v1 = require('../src/v1');
+const {stickyLoader, fakeauth, Secrets} = require('taskcluster-lib-testing');
+const api = require('../src/api');
 const load = require('../src/main');
 const config = require('taskcluster-lib-config');
 const _ = require('lodash');
 
 var helper = module.exports = {};
 
-// Call this in suites or tests that make API calls, etc; it will set up
-// what's required to respond to those calls.
-helper.setup = function(options) {
-  options = options || {};
-  var webServer = null;
+helper.load = stickyLoader(load);
+helper.load.inject('profile', 'test');
+helper.load.inject('process', 'test');
 
-  var loadOptions = {
-    profile: 'test',
-    process: 'test-helper',
-  };
+/**
+ * Set up an API server.
+ *
+ * This also sets up helper.login as an API client, using scopes configurable
+ * with helper.scopes([..]); and configures fakeAuth to support that.
+ */
+helper.withServer = function() {
+  var webServer = null;
 
   // Setup before tests
   suiteSetup(async () => {
-    testing.fakeauth.start({
+    fakeauth.start({
       'test-client': ['*'],
     });
 
-    webServer = await load('server', _.defaults({
-      authenticators: [],
-    }, loadOptions));
+    webServer = await helper.load('server');
 
     // Create client for working with API
     helper.baseUrl = 'http://localhost:' + webServer.address().port + '/v1';
-    var reference = v1.reference({baseUrl: helper.baseUrl});
+    var reference = api.reference({baseUrl: helper.baseUrl});
     helper.Login = taskcluster.createClient(reference);
     // Utility to create an Login instance with limited scopes
     helper.scopes = (...scopes) => {
@@ -60,6 +60,6 @@ helper.setup = function(options) {
     if (webServer) {
       await webServer.terminate();
     }
-    testing.fakeauth.stop();
+    fakeauth.stop();
   });
 };

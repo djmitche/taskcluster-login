@@ -1,7 +1,7 @@
 const config = require('taskcluster-lib-config');
 const loader = require('taskcluster-lib-loader');
 const scanner = require('./scanner');
-const v1 = require('./v1');
+const api = require('./api');
 const App = require('taskcluster-lib-app');
 const validator = require('taskcluster-lib-validate');
 const monitor = require('taskcluster-lib-monitor');
@@ -53,7 +53,7 @@ let load = loader({
   router: {
     requires: ['cfg', 'validator', 'monitor', 'handlers'],
     setup: ({cfg, validator, monitor, handlers}) => {
-      return v1.setup({
+      return api.setup({
         context: {},
         validator,
         authBaseUrl:      cfg.authBaseUrl,
@@ -77,7 +77,7 @@ let load = loader({
       references: [
         {
           name: 'api',
-          reference: v1.reference({baseUrl: cfg.server.publicUrl + '/v1'}),
+          reference: api.reference({baseUrl: cfg.server.publicUrl + '/v1'}),
         },
       ],
     }),

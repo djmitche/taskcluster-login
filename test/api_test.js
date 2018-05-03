@@ -1,14 +1,12 @@
-require('mocha');
+const assume = require('assume');
+const debug = require('debug')('test:api');
+const helper = require('./helper');
+const request = require('superagent');
 
-suite('API', function() {
-  var assume      = require('assume');
-  var debug       = require('debug')('test:api');
-  var helper      = require('./helper');
-  var request     = require('superagent');
+suite('api_test.js', function() {
+  helper.withServer();
 
-  helper.setup();
-
-  suite('credentialsFromAccessToken', function() {
+  suite('oidcCredentials', function() {
     test('returns 400 for a call without a header', async function() {
       try {
         await helper.login.oidcCredentials('test');
