@@ -114,18 +114,19 @@ let load = loader({
     },
   },
 
+  auth: {
+    requires: ['cfg'],
+    setup: async ({cfg}) => new taskcluster.Auth({credentials: cfg.app.credentials}),
+  },
+
   scanner: {
-    requires: ['cfg', 'handlers', 'monitor'],
-    setup: async ({cfg, handlers, monitor}) => {
-      await scanner(cfg, handlers);
+    requires: ['cfg', 'handlers', 'auth', 'monitor'],
+    setup: async ({cfg, handlers, auth, monitor}) => {
+      await scanner({cfg, handlers, auth});
 
       monitor.count('scanner.run');
       monitor.stopResourceMonitoring();
       await monitor.flush();
-
-      // the LDAP connection is still open, so we must exit
-      // explicitly or node will wait forever for it to die.
-      process.exit(0);
     },
   },
 

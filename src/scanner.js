@@ -6,7 +6,7 @@ const _ = require('lodash');
 
 const debug = Debug('scanner');
 
-async function scanner(cfg, handlers) {
+async function scanner({cfg, handlers, auth}) {
   // * get the set of identityProviderIds
   // * for each:
   //   * fetch all clients
@@ -17,7 +17,6 @@ async function scanner(cfg, handlers) {
 
   // NOTE: this function performs once auth operation at a time.  It is better
   // for scans to take longer than for the auth service to be overloaded.
-  let auth = new taskcluster.Auth({credentials: cfg.app.credentials});
 
   const scan = async h => {
     const handler = handlers[h];
