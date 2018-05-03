@@ -1,7 +1,7 @@
 const assume = require('assume');
 const {encode, decode} = require('../src/utils');
 
-suite('utils', function() {
+suite('utils_test.js', function() {
   suite('encoding', () => {
     test('encode does not encode the pipe symbol', () => {
       const result = encode('ad|Mozilla-LDAP|haali');
@@ -55,13 +55,20 @@ suite('utils', function() {
       const h = i.toString(16).toUpperCase();
       return h.length === 2 ? `!${h}` : `!0${h}`;
     };
+    const enc = [], dec = [];
     for (let i = 1; i <= 0x7e; i++) {
       const c = String.fromCharCode(i);
       if (validClientIdChar.test(c) && c !== '/') {
-        roundTrip(`chr(${i}) (literal)`, c, c);
+        // literal
+        dec.push(c);
+        enc.push(c);
       } else {
-        roundTrip(`chr(${i}) (encoded)`, c, hex(i));
+        // encoded
+        dec.push(c);
+        const h = i.toString(16).toUpperCase();
+        enc.push(h.length === 2 ? `!${h}` : `!0${h}`);
       }
     }
+    roundTrip('all characters 0x01..0x7e', dec.join(''), enc.join(''));
   });
 });
