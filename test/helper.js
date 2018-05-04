@@ -11,6 +11,20 @@ helper.load = stickyLoader(load);
 helper.load.inject('profile', 'test');
 helper.load.inject('process', 'test');
 
+helper.secrets = new Secrets({
+  secretName: 'project/taskcluster/testing/taskcluster-login',
+  load: helper.load,
+  secrets: {
+    auth0: [
+      {env: 'AUTH0_DOMAIN', cfg: 'handlers.mozilla-auth0.domain'},
+      {env: 'AUTH0_API_AUDIENCE', cfg: 'handlers.mozilla-auth0.apiAudience'},
+      {env: 'AUTH0_CLIENT_ID', cfg: 'handlers.mozilla-auth0.clientId'},
+      {env: 'AUTH0_CLIENT_SECRET', cfg: 'handlers.mozilla-auth0.clientSecret'},
+      {env: 'AUTH0_TEST_USER_ID', cfg: 'handlers.mozilla-auth0.testUserId'},
+    ],
+  },
+});
+
 /**
  * Set up an API server.
  *

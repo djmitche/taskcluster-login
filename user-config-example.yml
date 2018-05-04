@@ -1,0 +1,18 @@
+Profiles:
+  test:
+    handlers:
+      mozilla-auth0:
+        # These are all in the `taskcluster-accounts+staging@mozilla.com` auth0 account,
+        # with the password in passwordstore. The tenant is taskcluster-login-test.
+        domain: taskcluster-login-test.auth0.com
+
+        # client is set up under "Applications", and must be authorized for read:users in
+        # the Auth0 API.
+        clientId: ...
+        clientSecret: ...
+
+        # This userId is expected to exist in the account; create it under "Users"
+        # and set app_metadata to {"groups": ["test-group"]}
+        testUserId:  ...
+
+        apiAudience: taskcluster-login.ngrok.io # TODO

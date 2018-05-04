@@ -1,23 +1,29 @@
 const assume = require('assume');
 const Handler = require('../src/handlers/mozilla-auth0');
 const {encode} = require('../src/utils');
+const {secrets} = require('./helper');
 
-suite('handlers/mozilla-auth0', function() {
-  let handler = new Handler({
-    name: 'mozilla-auth0',
-    cfg: {
-      handlers: {
-        'mozilla-auth0': {
-          domain:'login-test.taskcluster.net',
-          apiAudience: 'login-test.taskcluster.net',
-          clientId: 'abcd',
-          clientSecret: 'defg',
-        },
-      },
-    },
-  });
+suite('handlers_mozilla_auth0_test.js', function() {
 
   suite('conversions', function() {
+    let handler;
+
+    setup(function() {
+      handler = new Handler({
+        name: 'mozilla-auth0',
+        cfg: {
+          handlers: {
+            'mozilla-auth0': {
+              domain:'login-test.taskcluster.net',
+              apiAudience: 'login-test.taskcluster.net',
+              clientId: 'abcd',
+              clientSecret: 'defg',
+            },
+          },
+        },
+      });
+    });
+
     const testClientId = (name, {clientId, userId, identity}) => {
       test(name, function() {
         assume(handler.userIdFromClientId(clientId)).to.equal(userId);
@@ -93,9 +99,13 @@ suite('handlers/mozilla-auth0', function() {
     test('userIdFromClientId with non-matching clientId', function() {
       assume(handler.userIdFromClientId('no-slashes')).to.equal(undefined);
     });
-  });
 
-  suite('userFromProfile', function() {
+    const assertRoles = (user, roles) => {
+      user.roles.sort();
+      roles.sort();
+      assume(user.roles).to.deeply.equal(roles);
+    };
+
     test('user for ldap profile', function() {
       const user_id = 'ad|Mozilla-LDAP|foo';
       const user = handler.userFromProfile({
@@ -106,6 +116,7 @@ suite('handlers/mozilla-auth0', function() {
       });
 
       assume(user.identity).to.equal(`mozilla-auth0/${encode(user_id)}`);
+      assertRoles(user, ['everybody']);
     });
 
     test('user for email profile', function() {
@@ -118,6 +129,7 @@ suite('handlers/mozilla-auth0', function() {
       });
 
       assume(user.identity).to.equal(`mozilla-auth0/${encode(user_id)}`);
+      assertRoles(user, ['everybody']);
     });
 
     test('user for google profile', function() {
@@ -130,6 +142,7 @@ suite('handlers/mozilla-auth0', function() {
       });
 
       assume(user.identity).to.equal(`mozilla-auth0/${encode(user_id)}`);
+      assertRoles(user, ['everybody']);
     });
 
     test('user for github profile', function() {
@@ -141,9 +154,10 @@ suite('handlers/mozilla-auth0', function() {
       });
 
       assume(user.identity).to.equal(`mozilla-auth0/${encode(user_id)}|octocat`);
+      assertRoles(user, ['everybody']);
     });
 
-    test('user with user_id for which encoding is not identity', () => {
+    test('user with user_id for which encoding is not identity', function() {
       ['abc@gmail.com|0000|test', 'abc@gmail.com|0000%2F|test']
         .forEach(user_id => {
           const user = handler.userFromProfile({
@@ -154,7 +168,101 @@ suite('handlers/mozilla-auth0', function() {
           });
 
           assume(user.identity).to.equal(`mozilla-auth0/${encode(user_id)}`);
+          assertRoles(user, ['everybody']);
         });
+    });
+
+    test('user with associated groups in profile.groups', function() {
+      const user_id = 'github|0000';
+      const user = handler.userFromProfile({
+        nickname: 'octocat',
+        user_id,
+        identities: [{provider: 'github', connection: 'github'}],
+        groups: ['mozilliansorg_somegroup', 'some_ldap_group', 'hris_ignored'],
+      });
+
+      assume(user.identity).to.equal(`mozilla-auth0/${encode(user_id)}|octocat`);
+      assertRoles(user, ['everybody', 'mozilla-group:some_ldap_group', 'mozillians-group:somegroup']);
+    });
+
+    test('user with associated groups in profile.app_metadata.groups', function() {
+      const user_id = 'github|0000';
+      const user = handler.userFromProfile({
+        nickname: 'octocat',
+        user_id,
+        identities: [{provider: 'github', connection: 'github'}],
+        app_metadata: {
+          groups: ['mozilliansorg_somegroup', 'some_ldap_group', 'hris_ignored'],
+        },
+      });
+
+      assume(user.identity).to.equal(`mozilla-auth0/${encode(user_id)}|octocat`);
+      assertRoles(user, ['everybody', 'mozilla-group:some_ldap_group', 'mozillians-group:somegroup']);
+    });
+  });
+
+  secrets.mockSuite('profileFromUserId', ['auth0'], function(mock, skipping) {
+    let handler;
+
+    setup(function() {
+      if (mock) {
+        testUserId = 'mock|user';
+
+        handler = new Handler({
+          name: 'mozilla-auth0',
+          cfg: {
+            handlers: {
+              'mozilla-auth0': {
+                domain:'login-test.taskcluster.net',
+                apiAudience: 'login-test.taskcluster.net',
+                clientId: 'abcd',
+                clientSecret: 'defg',
+              },
+            },
+          },
+        });
+
+        // set up a simple fake management api
+        handler.getManagementApi = () => ({
+          getUser: (userId, cb) => {
+            if (userId === testUserId) {
+              cb(null, {
+                app_metadata: {
+                  groups: ['test-group'],
+                },
+              });
+            } else {
+              cb(new Error('no such user'));
+            }
+          },
+        });
+      } else {
+        const auth0Secrets = secrets.get('auth0');
+        testUserId = auth0Secrets.AUTH0_TEST_USER_ID;
+
+        handler = new Handler({
+          name: 'mozilla-auth0',
+          cfg: {
+            handlers: {
+              'mozilla-auth0': {
+                domain: auth0Secrets.AUTH0_DOMAIN,
+                apiAudience: auth0Secrets.AUTH0_API_AUDIENCE,
+                clientId: auth0Secrets.AUTH0_CLIENT_ID,
+                clientSecret: auth0Secrets.AUTH0_CLIENT_SECRET,
+              },
+            },
+          },
+        });
+      }
+    });
+
+    test('gets a profile', async function() {
+      const prof = await handler.profileFromUserId(testUserId);
+      assume(prof.app_metadata).to.deeply.equal({groups: ['test-group']});
+    });
+
+    test('fails if no such profile', async function() {
+      await assume(handler.profileFromUserId('myspace|jbieber')).throwsAsync();
     });
   });
 });
